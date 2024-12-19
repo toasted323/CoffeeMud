@@ -56,6 +56,7 @@ public class ActiveTicker extends StdBehavior
 
 	protected void tickReset()
 	{
+		Log.infoOut("Tick reset. New tickDown: " + tickDown);
 		if(minGroup == 1)
 			tickDown=(int)Math.round(Math.random()*(maxTicks-minTicks))+minTicks;
 		else

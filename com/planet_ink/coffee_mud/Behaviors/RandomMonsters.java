@@ -168,6 +168,8 @@ public class RandomMonsters extends ActiveTicker
 		if((restrictedLocales!=null)&&(restrictedLocales.size()==0))
 			restrictedLocales=null;
 		alreadyTriedLoad=false;
+
+		Log.infoOut("Parameters set: minMonsters=" + minMonsters + ", maxMonsters=" + maxMonsters + ", avgMonsters=" + avgMonsters);
 	}
 
 	public RandomMonsters()
@@ -306,6 +308,8 @@ public class RandomMonsters extends ActiveTicker
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
+		Log.infoOut("Tick started: tickID=" + tickID + ", current monsters=" + maintained.size());
+
 		tickStatus=Tickable.STATUS_START;
 		super.tick(ticking,tickID);
 		if((!CMProps.getBoolVar(CMProps.Bool.MUDSTARTED))
@@ -333,6 +337,8 @@ public class RandomMonsters extends ActiveTicker
 		}
 		if(maintained.size()>=avgMonsters)
 		{
+			Log.infoOut("Monster count at or above average. Resetting tickDown to " + tickDown);
+
 			tickDown=this.maxTicks;
 			tickStatus=Tickable.STATUS_NOT;
 			return true;
@@ -342,6 +348,7 @@ public class RandomMonsters extends ActiveTicker
 		tickStatus=Tickable.STATUS_MISC+1;
 		if(monsters==null)
 		{
+			Log.warnOut("No monsters available to spawn");
 			tickStatus=Tickable.STATUS_NOT;
 			return true;
 		}
@@ -363,6 +370,8 @@ public class RandomMonsters extends ActiveTicker
 				tickStatus=Tickable.STATUS_MISC+5;
 				M.text();
 				maintained.add(M);
+				Log.infoOut("Spawned new monster: " + M.name() + ". Total monsters: " + maintained.size());
+
 				tickStatus=Tickable.STATUS_MISC+6;
 				if(ticking instanceof Room)
 				{
@@ -378,6 +387,8 @@ public class RandomMonsters extends ActiveTicker
 						M.bringToLife(((Room)ticking),true);
 					tickStatus=Tickable.STATUS_MISC+10;
 					Resources.removeResource("HELP_"+((Room)ticking).getArea().name().toUpperCase());
+
+					Log.infoOut("Monster spawned in room: " + ((Room)ticking).displayText());
 				}
 				else
 				if((ticking instanceof Area)&&(((Area)ticking).metroSize()>0))
@@ -411,6 +422,11 @@ public class RandomMonsters extends ActiveTicker
 					else
 						maintained.remove(M);
 					tickStatus=Tickable.STATUS_MISC+17;
+					if(room!=null) {
+						Log.infoOut("Monster spawned in area room: " + room.displayText());
+					} else {
+						Log.warnOut("Failed to find suitable room for monster spawn");
+					}
 				}
 			}
 		}
