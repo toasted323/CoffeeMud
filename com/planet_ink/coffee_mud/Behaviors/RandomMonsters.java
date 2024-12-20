@@ -310,6 +310,19 @@ public class RandomMonsters extends ActiveTicker
 	{
 		tickStatus=Tickable.STATUS_START;
 		super.tick(ticking,tickID);
+
+		String locationInfo = "Unknown";
+		if (ticking instanceof Room) {
+			locationInfo = "Room: " + ((Room) ticking).displayText(null) +
+					", Area: " + ((Room) ticking).getArea().name();
+		} else if (ticking instanceof Area) {
+			locationInfo = "Area: " + ((Area) ticking).name();
+		}
+
+
+		Log.debugOut("RandomMonsters: Tick started - tickID=" + tickID +
+				", current monsters=" + maintained.size() + ", " + locationInfo);
+
 		if((!CMProps.getBoolVar(CMProps.Bool.MUDSTARTED))
 		||(CMSecurity.isDisabled(CMSecurity.DisFlag.RANDOMMONSTERS)))
 		{

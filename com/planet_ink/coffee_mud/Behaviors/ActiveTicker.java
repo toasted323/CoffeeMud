@@ -57,16 +57,23 @@ public class ActiveTicker extends StdBehavior
 	protected void tickReset()
 	{
 		if(minGroup == 1)
+		{
 			tickDown=(int)Math.round(Math.random()*(maxTicks-minTicks))+minTicks;
+			Log.debugOut("ActiveTicker: Tick reset (single) - new tickDown: " + tickDown);
+		}
 		else
 		{
 			if(++grpCount >=minGroup)
 			{
 				tickDown=(int)Math.round(Math.random()*(maxTicks-minTicks))+minTicks;
 				grpCount=0;
+				Log.debugOut("ActiveTicker: Tick reset (group) - new tickDown: " + tickDown + ", grpCount reset to 0");
 			}
 			else
+			{
 				tickDown=minTicks;
+				Log.debugOut("ActiveTicker: Tick reset (group) - tickDown set to minTicks: " + tickDown + ", grpCount: " + grpCount);
+			}
 		}
 	}
 
@@ -79,6 +86,7 @@ public class ActiveTicker extends StdBehavior
 		chance=CMParms.getParmInt(parms,"chance",chance);
 		minGroup=CMParms.getParmInt(parms,"mingrp",minGroup);
 		tickReset();
+		Log.debugOut("ActiveTicker: Parameters set - minTicks=" + minTicks + ", maxTicks=" + maxTicks + ", chance=" + chance + ", minGroup=" + minGroup);
 	}
 	
 	protected Map<String,String> getCleanedParms()
@@ -128,39 +136,47 @@ public class ActiveTicker extends StdBehavior
 	protected boolean canChance()
 	{
 		final int a=CMLib.dice().rollPercentage();
-		if(a>chance)
-			return false;
-		return true;
+		final boolean result = a <= chance;
+		Log.debugOut("ActiveTicker: Chance check - rolled: " + a + ", chance: " + chance + ", result: " + result);
+		return result;
 	}
 
 	protected boolean canAct(final Tickable ticking, final int tickID)
 	{
+		Log.debugOut("ActiveTicker: canAct check - tickID: " + tickID + ", tickDown: " + tickDown);
 		switch(tickID)
 		{
-		case Tickable.TICKID_AREA:
-		{
-			if(!(ticking instanceof Area))
+			case Tickable.TICKID_AREA:
+			{
+				if(!(ticking instanceof Area))
+					break;
+			}
+			//$FALL-THROUGH$
+			case Tickable.TICKID_MOB:
+			case Tickable.TICKID_ITEM_BEHAVIOR:
+			case Tickable.TICKID_ROOM_BEHAVIOR:
+			{
+				if((--tickDown)<1)
+				{
+					tickReset();
+					if((ticking instanceof MOB)&&(!canActAtAll(ticking)))
+					{
+						Log.debugOut("ActiveTicker: Cannot act - MOB cannot act at all");
+						return false;
+					}
+					if(CMProps.getBoolVar(CMProps.Bool.MUDSHUTTINGDOWN))
+					{
+						Log.debugOut("ActiveTicker: Cannot act - MUD is shutting down");
+						return false;
+					}
+					return canChance();
+				}
+				break;
+			}
+			default:
 				break;
 		}
-		//$FALL-THROUGH$
-		case Tickable.TICKID_MOB:
-		case Tickable.TICKID_ITEM_BEHAVIOR:
-		case Tickable.TICKID_ROOM_BEHAVIOR:
-		{
-			if((--tickDown)<1)
-			{
-				tickReset();
-				if((ticking instanceof MOB)&&(!canActAtAll(ticking)))
-					return false;
-				if(CMProps.getBoolVar(CMProps.Bool.MUDSHUTTINGDOWN))
-					return false;
-				return canChance();
-			}
-			break;
-		}
-		default:
-			break;
-		}
+		Log.debugOut("ActiveTicker: Cannot act - default case or tickDown > 0");
 		return false;
 	}
 }
